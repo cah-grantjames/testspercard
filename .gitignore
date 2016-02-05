@@ -1,0 +1,9 @@
+node_modules/
+*.swp
+bower_components/
+.DS_Store
+.idea/
+.nitconfig
+npm-debug.log
+glimr_results_*
+*.csv
