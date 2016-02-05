@@ -22,4 +22,13 @@ describe('Diff parser', function(){
         expect(files[1].tests[0].wasModified).to.equal(true);
         expect(files[1].tests[1].wasModified).to.equal(false);
     });
+
+
+    it('should know the diff command for an issue', function(){
+        var cardObjects = JSON.parse(fs.readFileSync(__dirname + "/data/glimr_results_cards.json").toString());
+
+        expect(diffParser.getDiffCommand(cardObjects[0])).to.equal("git diff --no-prefix -U1000 4fc7d8e3daba0880808ebd2c71f5535127d7b23f ea0f267cc686c367389af6db4b1670fd9fff7cc3");
+
+    })
+
 });
