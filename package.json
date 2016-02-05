@@ -7,7 +7,6 @@
   },
   "devDependencies": {
     "mocha": "1.16.2",
-    "superagent": "0.15.7",
     "expect.js": "0.2.0"
   },
   "scripts": {

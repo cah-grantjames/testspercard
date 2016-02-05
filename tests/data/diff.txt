@@ -1,0 +1,182 @@
+diff --git app/src/main/java/com/cardinalhealth/alfred/patient/model/PodEventLogger.java app/src/main/java/com/cardinalhealth/alfred/patient/model/PodEventLogger.java
+index ef41966..a9c73d7 100644
+--- app/src/main/java/com/cardinalhealth/alfred/patient/model/PodEventLogger.java
++++ app/src/main/java/com/cardinalhealth/alfred/patient/model/PodEventLogger.java
+@@ -1,73 +1,69 @@
+ package com.cardinalhealth.alfred.patient.model;
+ 
+ import com.cardinalhealth.alfred.patient.model.dao.FillDao;
+ import com.cardinalhealth.alfred.patient.model.dao.PodDao;
+ import com.cardinalhealth.alfred.patient.model.dao.PodEventLogEntryDao;
+ import com.cardinalhealth.alfred.patient.model.dto.FillDto;
+ import com.cardinalhealth.alfred.patient.model.dto.PodDto;
+ import com.cardinalhealth.alfred.patient.model.dto.PodEventLogEntryDto;
+-import com.cardinalhealth.alfred.patient.model.dto.RxEventContainer;
+ import com.cardinalhealth.alfred.patient.remote.AlfredRemoteApi;
+ 
+ import javax.inject.Inject;
+ 
+ import roboguice.util.Ln;
+ 
+ public class PodEventLogger {
+ 
+     private AlfredRemoteApi alfredRemoteApi;
+     private FillDao fillDao;
+     private PodDao podDao;
+     private PodEventLogEntryDao podEventLogEntryDao;
+ 
+     @Inject
+     public PodEventLogger(AlfredRemoteApi alfredRemoteApi, FillDao fillDao, PodDao podDao, PodEventLogEntryDao podEventLogEntryDao) {
+         this.alfredRemoteApi = alfredRemoteApi;
+         this.fillDao = fillDao;
+         this.podDao = podDao;
+         this.podEventLogEntryDao = podEventLogEntryDao;
+     }
+ 
+     public void logPodEjectedEvent(String medicationId, int slotNumber) {
+         FillDto fill = fillDao.findByMedicationId(medicationId);
+         PodDto pod = podDao.findByFillId(fill.getId());
+ 
+         PodEventLogEntryDto podEjectedEvent = new PodEventLogEntryBuilder()
+                 .ejectedPod(pod)
+                 .setSlotNumber(slotNumber)
+                 .setFillId(fill.getId())
+                 .setMedicationId(medicationId)
+                 .setCurrentPillCount(fill.getCurrentPillCount())
+                 .create();
+ 
+         logPodEvent(podEjectedEvent);
+     }
+ 
+     public void logPodEvent(PodEventLogEntryDto podEventEntry) {
+-        new Thread(new LogPodEventRunnable(podEventEntry, podEventLogEntryDao, alfredRemoteApi)).start();
++        new Thread(new LogPodEventRunnable(podEventEntry, podEventLogEntryDao)).start();
+     }
+ 
+     public static class LogPodEventRunnable implements Runnable {
+         private final PodEventLogEntryDto podEventEntry;
+         private final PodEventLogEntryDao podEventLogEntryDao;
+-        private final AlfredRemoteApi alfredRemoteApi;
+ 
+-
+-        public LogPodEventRunnable(PodEventLogEntryDto podEventEntry, PodEventLogEntryDao podEventLogEntryDao, AlfredRemoteApi alfredRemoteApi) {
++        public LogPodEventRunnable(PodEventLogEntryDto podEventEntry, PodEventLogEntryDao podEventLogEntryDao) {
+             this.podEventEntry = podEventEntry;
+             this.podEventLogEntryDao = podEventLogEntryDao;
+-            this.alfredRemoteApi = alfredRemoteApi;
+         }
+ 
+         @Override
+         public void run() {
+             try {
++
+                 podEventLogEntryDao.saveLogPodEvent(podEventEntry);
+-                alfredRemoteApi.sendRxEvent(new RxEventContainer(podEventEntry));
+                 Ln.d("Successfully sent pod event");
+             } catch (Exception e) {
+                 Ln.e(e, e.getMessage());
+             }
+         }
+     }
+ }
+\ No newline at end of file
+diff --git app/src/test/java/com/cardinalhealth/alfred/patient/model/PodEventLoggerTest.java app/src/test/java/com/cardinalhealth/alfred/patient/model/PodEventLoggerTest.java
+index f9c6b62..bc1a380 100644
+--- app/src/test/java/com/cardinalhealth/alfred/patient/model/PodEventLoggerTest.java
++++ app/src/test/java/com/cardinalhealth/alfred/patient/model/PodEventLoggerTest.java
+@@ -1,91 +1,89 @@
+ package com.cardinalhealth.alfred.patient.model;
+ 
+ import com.cardinalhealth.alfred.patient.model.dao.FillDao;
+ import com.cardinalhealth.alfred.patient.model.dao.PodDao;
+ import com.cardinalhealth.alfred.patient.model.dao.PodEventLogEntryDao;
+ import com.cardinalhealth.alfred.patient.model.dto.FillDto;
+ import com.cardinalhealth.alfred.patient.model.dto.PodDto;
+ import com.cardinalhealth.alfred.patient.model.dto.PodEventLogEntryDto;
+ import com.cardinalhealth.alfred.patient.model.dto.RxEventContainer;
+ import com.cardinalhealth.alfred.patient.remote.AlfredRemoteApi;
+ 
+ import org.junit.Before;
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
+ import org.mockito.MockitoAnnotations;
+ import org.robolectric.RobolectricTestRunner;
+ 
+ import static junit.framework.Assert.assertEquals;
+ import static org.mockito.Matchers.any;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.when;
+ 
+ @RunWith(RobolectricTestRunner.class)
+ public class PodEventLoggerTest {
+ 
+     @InjectMocks
+     PodEventLogger podEventLogger;
+     @Mock
+     AlfredRemoteApi mockAlfredRemoteApi;
+     @Mock
+     PodDao mockPodDao;
+     @Mock
+     FillDao mockFillDao;
+     @Mock
+     private PodEventLogEntryDao mockPodEventLogEntryDao;
+ 
+     @Before
+     public void setUp() throws Exception {
+         MockitoAnnotations.initMocks(this);
+     }
+ 
+     @Test
+-    public void itSavesTheEventAndShipsItToTheSever1() throws Exception {
++    public void itSavesTheEventAndShipsItToTheSever() throws Exception {
+         PodEventLogEntryDto podEventEntry = new PodEventLogEntryDto();
+-        new PodEventLogger.LogPodEventRunnable(podEventEntry, mockPodEventLogEntryDao, mockAlfredRemoteApi).run();
++        new PodEventLogger.LogPodEventRunnable(podEventEntry, mockPodEventLogEntryDao).run();
+         verify(mockPodEventLogEntryDao).saveLogPodEvent(podEventEntry);
+-        ArgumentCaptor<RxEventContainer> captor = ArgumentCaptor.forClass(RxEventContainer.class);
+-        verify(mockAlfredRemoteApi).sendRxEvent(captor.capture());
+-        assertEquals(podEventEntry, captor.getValue().getEventBody());
++        verify(mockAlfredRemoteApi).sendRxEvent(any(RxEventContainer.class));
+     }
+ 
+     @Test
+     public void itLogsPodEjectedEvent() {
+         String medicationId = "medicationId";
+         int slotNumber = 1;
+         FillDto oldFillDto = new FillDto();
+         String fillId = "FillId";
+         oldFillDto.setId(fillId);
+         oldFillDto.setCurrentPillCount(20);
+         PodDto oldPodDto = new PodDto();
+         when(mockFillDao.findByMedicationId(medicationId)).thenReturn(oldFillDto);
+         when(mockPodDao.findByFillId(oldFillDto.getId())).thenReturn(oldPodDto);
+ 
+         ArgumentCaptor<RxEventContainer> podEventLogEntryArg = ArgumentCaptor.forClass(RxEventContainer.class);
+         podEventLogger.logPodEjectedEvent(medicationId, slotNumber);
+ 
+         verify(mockAlfredRemoteApi).sendRxEvent(podEventLogEntryArg.capture());
+ 
+         PodEventLogEntryDto expectedPodEjectedEvent = new PodEventLogEntryBuilder()
+                 .ejectedPod(oldPodDto)
+                 .setSlotNumber(slotNumber)
+                 .setFillId(oldFillDto.getId())
+                 .setMedicationId(medicationId)
+                 .setCurrentPillCount(oldFillDto.getCurrentPillCount())
+                 .create();
+ 
+         podEventLogger.logPodEjectedEvent(medicationId, slotNumber);
+ 
+         PodEventLogEntryDto dto = (PodEventLogEntryDto) podEventLogEntryArg.getValue().getEventBody();
+         assertEquals(expectedPodEjectedEvent.getFillId(), dto.getFillId());
+         assertEquals(expectedPodEjectedEvent.getPodId(), dto.getPodId());
+         assertEquals(expectedPodEjectedEvent.getMedicationId(), dto.getMedicationId());
+         assertEquals(expectedPodEjectedEvent.getSlotNumber(), dto.getSlotNumber());
+         assertEquals(expectedPodEjectedEvent.getStatus(), dto.getStatus());
+         assertEquals(expectedPodEjectedEvent.getCurrentPillCount(), dto.getCurrentPillCount());
+     }
+ 
+ }
+\ No newline at end of file
