@@ -4,13 +4,15 @@
   "description": "",
   "main": "",
   "dependencies": {
+    "glimr": "^1.0.19"
   },
   "devDependencies": {
     "mocha": "1.16.2",
     "expect.js": "0.2.0"
   },
   "scripts": {
-    "test": "mocha tests"
+    "test": "npm run generate && mocha tests",
+    "generate": "cd tests/data/ && rm glimr_results_* && nohup node ../../node_modules/glimr/glimr.js ALF  alflogs.txt 0 0  && cd ../../"
   },
   "author": "",
   "license": "MIT"

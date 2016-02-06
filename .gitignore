@@ -7,3 +7,4 @@ bower_components/
 npm-debug.log
 glimr_results_*
 *.csv
+nohup.out
