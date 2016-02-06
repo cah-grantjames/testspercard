@@ -1,3 +1,4 @@
+var startTime = new Date().getTime();
 var cliArgs = process.argv.slice(2);
 var EXPECTED_ARGS = "tpc <project_key>"
     +"<start UNIX epoch OR 0 for all> "
@@ -32,7 +33,12 @@ runner.run("git", ["log"], function(logs){
     var logObjects = glimrBuild.toLogObjectsArray(content, startDate, endDate);
     var cardObjects = glimrBuild.cards.findUniqueCards(projectKey, logObjects);
     diffParser.findTestsForEachCard(cardObjects, function(cardObjectsWithTestsForEachCard){
-        console.log(JSON.stringify(cardObjectsWithTestsForEachCard, 0, 4));
+        var R = {};
+        R.cardObjectsWithTestsForEachCard = cardObjectsWithTestsForEachCard;
+        var timeExpired = ((new Date().getTime())-startTime);
+        R.timeExpired = timeExpired+"ms";
+        R.timePerCard = (timeExpired/cardObjectsWithTestsForEachCard.length)+"ms";
+        console.log(JSON.stringify(R, 0, 4));
     });
 });
 
