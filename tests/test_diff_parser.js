@@ -26,9 +26,14 @@ describe('Diff parser', function(){
 
     it('should know the diff command for an issue', function(){
         var cardObjects = JSON.parse(fs.readFileSync(__dirname + "/data/glimr_results_cards.json").toString());
+        var cmdArgs = diffParser.getDiffCommandArgs(cardObjects[0])
+        var expectedCmdArgs = ["diff","--no-prefix",
+                                          "-U1000","4fc7d8e3daba0880808ebd2c71f5535127d7b23f",
+                                          "ea0f267cc686c367389af6db4b1670fd9fff7cc3"];
+        for(var i=0; i<expectedCmdArgs.length; i++) {
+            expect(cmdArgs[i]).to.equal(expectedCmdArgs[i]);
+        }
 
-        expect(diffParser.getDiffCommand(cardObjects[0])).to.equal("git diff --no-prefix -U1000 4fc7d8e3daba0880808ebd2c71f5535127d7b23f ea0f267cc686c367389af6db4b1670fd9fff7cc3");
-
-    })
+    });
 
 });
