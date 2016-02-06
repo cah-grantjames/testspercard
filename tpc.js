@@ -31,8 +31,9 @@ runner.run("git", ["log"], function(logs){
     }
     var logObjects = glimrBuild.toLogObjectsArray(content, startDate, endDate);
     var cardObjects = glimrBuild.cards.findUniqueCards(projectKey, logObjects);
-    var cardObjectsWithTestsForEachCard = diffParser.findTestsForEachCard(cardObjects);
-    console.log(cardObjectsWithTestsForEachCard);
+    diffParser.findTestsForEachCard(cardObjects, function(cardObjectsWithTestsForEachCard){
+        console.log(JSON.stringify(cardObjectsWithTestsForEachCard, 0, 4));
+    });
 });
 
 
