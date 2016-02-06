@@ -37,7 +37,8 @@ runner.run("git", ["log"], function(logs){
         R.cardObjectsWithTestsForEachCard = cardObjectsWithTestsForEachCard;
         var timeExpired = ((new Date().getTime())-startTime);
         R.timeExpired = timeExpired+"ms";
-        R.numberOfCards = cardObjectsWithTestsForEachCard.length;
+        R.numberOfCards = cardObjects.length;
+        R.numberOfCardsWithTests = cardObjectsWithTestsForEachCard.length;
         R.timePerCard = (timeExpired/cardObjectsWithTestsForEachCard.length)+"ms";
         console.log(JSON.stringify(R, 0, 4));
     });
