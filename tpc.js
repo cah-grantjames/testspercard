@@ -32,15 +32,33 @@ runner.run("git", ["log"], function(logs){
     }
     var logObjects = glimrBuild.toLogObjectsArray(content, startDate, endDate);
     var cardObjects = glimrBuild.cards.findUniqueCards(projectKey, logObjects);
+    cardObjects = cardObjects.slice(0,30);
     diffParser.findTestsForEachCard(cardObjects, function(cardObjectsWithTestsForEachCard){
         var R = {};
         R.cardObjectsWithTestsForEachCard = cardObjectsWithTestsForEachCard;
         var timeExpired = ((new Date().getTime())-startTime);
         R.timeExpired = timeExpired+"ms";
-        R.numberOfCards = cardObjects.length;
-        R.numberOfCardsWithTests = cardObjectsWithTestsForEachCard.length;
+        R.numberOfCards = cardObjectsWithTestsForEachCard.length;
         R.timePerCard = (timeExpired/cardObjectsWithTestsForEachCard.length)+"ms";
-        console.log(JSON.stringify(R, 0, 4));
+        var jsonResults = JSON.stringify(R, 0, 4);
+        var dateStr = (new Date(startTime).toString()).replace(/\s/g,"_");
+        fs.writeFileSync("tpc_report_"+projectKey+"_"+dateStr+".json", jsonResults);
+        //CSV
+        var csv = "issue, file, test";
+        for(var i=0; i<R.cardObjectsWithTestsForEachCard.length; i++) {
+            var card = R.cardObjectsWithTestsForEachCard[i];
+            var issue = card.key;
+            for(var j=0; j<card.testsFound.length; j++) {
+                var tf = card.testsFound[i];
+                var file = tf.file;
+                for(var k=0; k<tf.tests.length; k++) {
+                    var test = tf.tests[k];
+                    csv += "\n" + issue + "," + file + "," + test;
+                }
+            }
+        }
+        fs.writeFileSync("tpc_report_"+projectKey+"_"+dateStr+".csv", csv);
+
     });
 });
 
