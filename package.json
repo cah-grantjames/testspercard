@@ -4,7 +4,7 @@
   "description": "",
   "main": "",
   "dependencies": {
-    "glimr": "^1.0.19"
+    "glimr": "^1.0.20"
   },
   "devDependencies": {
     "mocha": "1.16.2",
