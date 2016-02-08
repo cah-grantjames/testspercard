@@ -1,6 +1,6 @@
 var startTime = new Date().getTime();
 var cliArgs = process.argv.slice(2);
-var EXPECTED_ARGS = "tpc <project_key>"
+var EXPECTED_ARGS = "tpc <project_key> "
     +"<start UNIX epoch OR 0 for all> "
     +"<end UNIX epoch OR 0 for all> ";
 if(cliArgs && cliArgs[0] === "help") {
@@ -51,7 +51,7 @@ runner.run("git", ["log"], function(logs){
             for(var j=0; j<card.testsFound.length; j++) {
                 var tf = card.testsFound[i];
                 var file = tf.file;
-                for(var k=0; k<tf.tests.length; k++) {
+                for(var k=0; k<tf.tests.length; k++) {w
                     var test = tf.tests[k];
                     csv += "\n" + issue + "," + file + "," + test;
                 }
